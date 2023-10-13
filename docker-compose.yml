@@ -1,0 +1,56 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    image: backend:test
+    container_name: medusa-server
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/medusa-docker
+      REDIS_URL: redis://cache
+      NODE_ENV: development
+      JWT_SECRET: some_jwt_secret
+      COOKIE_SECRET: some_cookie_secret
+      PORT: 9000
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medusa-docker
+
+  redis:
+    image: redis:latest
+    container_name: cache
+    ports:
+      - "6379:6379"
+
+#  admin is plugin of medusa backend since v1.12
+#  admin:
+#    build:
+#      context: .
+#      dockerfile: docker/admin/Dockerfile
+#    image: admin:test
+#    depends_on:
+#      - backend
+#    container_name: medusa-admin
+#    env_file: 
+#      - .env
+
+  storefront:
+    build:
+      context: .
+      dockerfile: docker/storefront/Dockerfile
+    image: storefront:test
+    container_name: medusa-storefront
+    depends_on:
+      - backend
+    env_file:
+      - ./my-medusa-storefront/.env

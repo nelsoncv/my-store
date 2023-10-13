@@ -1,0 +1,68 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/backend/Dockerfile.prod
+    image: backend:latest
+    container_name: medusa-server
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/medusa-docker
+      NODE_ENV: production
+      JWT_SECRET: thisissomerandomjwt
+      COOKIE_SECRET: thisissomerandomcookie
+      STORE_CORS: http://13.250.7.157
+      ADMIN_CORS: http://13.250.7.157
+    ports:
+      - "9000:9000"
+
+  postgres:
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medusa-docker
+
+  redis:
+    restart: always
+
+#  admin:
+#    build:
+#      dockerfile: docker/admin/Dockerfile.prod
+#    #image: admin:latest
+#    image: jmflaherty/medusajs-admin
+#    restart: always
+#    depends_on:
+#      - backend
+#    container_name: medusa-admin
+#    env_file: 
+#      - .env.production
+#    environment:
+#      NODE_ENV: development
+#      JWT_SECRET: thisissomerandomjwt
+#      COOKIE_SECRET: thisissomerandomcookie
+#      MEDUSA_ADMIN_BACKEND_URL: http://backend:9000
+#    ports:
+#      - "7001:7000"
+
+  storefront:
+    build:
+      context: .
+      dockerfile: docker/storefront/Dockerfile.prod
+      x-bake:
+        platforms:
+          - linux/amd64
+          - linux/arm64
+    image: storefront:latest
+    container_name: medusa-storefront
+    restart: always
+    env_file:
+      - ./my-medusa-storefront/.env.production
+    depends_on:
+      - backend
+    ports:
+      - "8000:8000"
